@@ -1,11 +1,7 @@
 use crate::gaussian::RawGaussian;
 
-pub fn load_ply(path: &std::path::Path) -> Vec<RawGaussian> {
-    let data = std::fs::read(path).unwrap_or_else(|error| {
-        panic!("Failed to read PLY file {}: {}", path.display(), error);
-    });
-
-    let (header_end, line_ending_len) = find_header_end(&data);
+pub fn load_ply_from_bytes(data: &[u8]) -> Vec<RawGaussian> {
+    let (header_end, line_ending_len) = find_header_end(data);
     let header_str =
         std::str::from_utf8(&data[..header_end]).expect("PLY header is not valid UTF-8");
 
@@ -26,6 +22,14 @@ pub fn load_ply(path: &std::path::Path) -> Vec<RawGaussian> {
     let raw_slice: &[RawGaussian] = bytemuck::cast_slice(&body[..expected_size]);
 
     raw_slice.to_vec()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+pub fn load_ply(path: &std::path::Path) -> Vec<RawGaussian> {
+    let data = std::fs::read(path).unwrap_or_else(|error| {
+        panic!("Failed to read PLY file {}: {}", path.display(), error);
+    });
+    load_ply_from_bytes(&data)
 }
 
 fn find_header_end(data: &[u8]) -> (usize, usize) {

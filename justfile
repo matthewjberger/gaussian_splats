@@ -36,9 +36,14 @@ init-wasm:
 lint:
     cargo clippy --all --tests -- -D warnings
 
-# Runs the app natively
-run:
-    cargo run -r
+# Downloads the truck point cloud PLY file
+fetch-truck:
+    New-Item -ItemType Directory -Force -Path assets | Out-Null
+    Invoke-WebRequest -Uri "https://drive.usercontent.google.com/download?id=1bMR-LMXBlzLqIHaaKGccX9ZA7DalQuDZ&export=download&confirm=t" -OutFile assets/truck_point_cloud.ply
+
+# Runs the app natively with a PLY file
+run ply_path:
+    cargo run -r -- {{ply_path}}
 
 # Runs the app with OpenXR (VR headset)
 run-openxr:

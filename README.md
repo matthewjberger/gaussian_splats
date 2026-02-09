@@ -1,99 +1,58 @@
-# Nightshade Template
+# 3D Gaussian Splatting Viewer
 
-A template for creating applications with the [Nightshade](https://github.com/matthewjberger/nightshade) game engine.
+A real-time 3D Gaussian Splatting viewer built on the [Nightshade](https://github.com/matthewjberger/nightshade) game engine. Loads pre-trained `.ply` files from the standard [3DGS training pipeline](https://github.com/graphdeco-inria/gaussian-splatting) and renders them using GPU compute preprocessing, bitonic sort, and alpha-blended instanced quad rendering.
 
-## Quickstart
+## Usage
 
 ```bash
-# native
-just run
-
-# wasm (webgpu)
-just run-wasm
-
-# openxr (vr headset)
-just run-openxr
+cargo run --release -- <path_to.ply>
 ```
 
-> All chromium-based browsers like Brave, Vivaldi, Chrome, etc support WebGPU.
-> Firefox also [supports WebGPU](https://mozillagfx.wordpress.com/2025/07/15/shipping-webgpu-on-windows-in-firefox-141/) now starting with version `141`.
+The viewer expects a `.ply` file output from the 3DGS training pipeline (e.g. `point_cloud/iteration_30000/point_cloud.ply`).
+
+### Controls
+
+- **Mouse drag** - orbit camera
+- **Scroll** - zoom
+- **Q** - quit
+
+## How It Works
+
+The rendering pipeline runs entirely on the GPU each frame:
+
+1. **Preprocess** (compute) - Projects each 3D Gaussian to 2D screen space. Builds the 2D covariance from the 3D covariance via the Jacobian of the projective transform (`Sigma' = J W Sigma W^T J^T`). Computes the screen-space conic (inverse covariance), pixel radius (3-sigma), degree-0 SH color, and sigmoid opacity. Frustum culls and writes visible splats + depth sort keys.
+
+2. **Sort** (compute) - Bitonic sort on depth keys to order splats back-to-front. Runs `O(log^2 N)` dispatches per frame with dynamic uniform offsets for sort parameters.
+
+3. **Render** (vertex + fragment) - Draws instanced quads (6 vertices per splat) using `draw_indirect`. Each quad is expanded by the splat's pixel radius. The fragment shader evaluates the 2D Gaussian falloff (`exp(-0.5 * d^T * Sigma'^{-1} * d)`) and outputs premultiplied alpha. Hardware blending with `(One, OneMinusSrcAlpha)` composites back-to-front.
+
+## Architecture
+
+```
+src/
+  main.rs           - Entry point, State impl, pan-orbit camera, egui overlay
+  gaussian.rs       - RawGaussian (PLY layout) / GpuGaussian (GPU-packed) structs
+  ply.rs            - Binary PLY parser (bytemuck cast)
+  splat_pass.rs     - PassNode<World> impl (buffers, pipelines, bind groups, dispatch)
+  shaders/
+    preprocess.wgsl - Compute: 3D->2D projection, covariance, cull, SH color
+    sort.wgsl       - Compute: bitonic sort by depth
+    render.wgsl     - Vertex+Fragment: instanced quads with Gaussian alpha blend
+```
+
+## Technical Details
+
+- **SH degree-0 only** - View-independent color from the DC spherical harmonics coefficient
+- **Bitonic sort** - Global GPU sort, no shared memory optimization; ~231 dispatches for 2M gaussians
+- **No depth write** - Visibility handled entirely by sorted alpha blending
+- **Premultiplied alpha** - Correct compositing via hardware blend state
+- **PLY format** - Reads the standard 62-float-per-vertex binary layout (position, normals, SH DC, SH rest, opacity, scale, rotation)
 
 ## Prerequisites
 
-* [just](https://github.com/casey/just)
-* [trunk](https://trunkrs.dev/) (for web builds)
-* [cross](https://github.com/cross-rs/cross) (for Steam Deck builds)
-  * Requires Docker (macOS/Linux) or Docker Desktop (Windows)
-
-> Run `just` with no arguments to list all commands
-
-## Optional Features
-
-Enable features with `cargo run --features <feature>`:
-
-| Feature | Description | Docs |
-|---------|-------------|------|
-| `plugins` | WASI plugin runtime for modding support | [Plugins](https://github.com/matthewjberger/nightshade/blob/main/docs/PLUGINS.md) |
-| `scripting` | Rhai scripting for runtime script execution | [Scripting](https://github.com/matthewjberger/nightshade/blob/main/docs/SCRIPTING.md) |
-| `tracing` | File logging to `logs/nightshade.log` | [Profiling](https://github.com/matthewjberger/nightshade/blob/main/docs/PROFILING.md) |
-| `openxr` | VR headset support | |
-| `steam` | Steamworks integration | [Steam](https://github.com/matthewjberger/nightshade/blob/main/docs/STEAM.md) |
-| `mcp` | MCP server for AI-assisted scene manipulation | See below |
-
-## MCP Integration (Native Only)
-
-The `mcp` feature exposes an MCP (Model Context Protocol) server that allows AI assistants like Claude to interact with your running application. This enables AI-driven scene manipulation, entity spawning, and real-time control without recompilation.
-
-> **Note:** MCP is only supported on native platforms (Windows, macOS, Linux). It is not available for WASM builds.
-
-### Enabling MCP
-
-Add the feature to your dependencies:
-
-```toml
-nightshade = { version = "0.6", features = ["egui", "mcp"] }
-```
-
-Or run with the feature flag:
-
-```bash
-cargo run --features mcp
-```
-
-When enabled, the engine automatically starts an MCP server on `http://127.0.0.1:3333/mcp`.
-
-### Connecting Claude Code
-
-```bash
-claude mcp add --transport http nightshade http://127.0.0.1:3333/mcp
-```
-
-### Available Tools
-
-| Tool | Description |
-|------|-------------|
-| `list_entities` | List all named entities in the scene |
-| `query_entity` | Get position, rotation, scale of an entity by name |
-| `spawn_entity` | Spawn a new entity (Cube, Sphere, Cylinder, Cone, Plane, Torus) |
-| `despawn_entity` | Remove an entity by name |
-| `set_position` | Set entity position [x, y, z] |
-| `set_rotation` | Set entity rotation as euler angles [pitch, yaw, roll] in radians |
-| `set_scale` | Set entity scale [x, y, z] |
-| `set_material_color` | Set entity material base color [r, g, b, a] |
-
-### Example
-
-With MCP enabled and Claude Code connected, you can say:
-
-> "Spawn a red cube called 'player' at position [0, 1, 0]"
-
-Claude will use the MCP tools to execute:
-1. `spawn_entity(name: "player", mesh: "Cube", position: [0, 1, 0])`
-2. `set_material_color(name: "player", color: [1.0, 0.0, 0.0, 1.0])`
-
-The editor enables MCP by default for AI-assisted development workflows.
-
-See also: [Steam Deck Deployment](https://github.com/matthewjberger/nightshade/blob/main/docs/STEAM_DECK.md)
+- Rust (2024 edition)
+- A GPU with WebGPU/Vulkan support
+- A pre-trained 3DGS `.ply` file
 
 ## License
 

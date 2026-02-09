@@ -8,6 +8,7 @@ use splat_pass::SplatPass;
 
 static GAUSSIANS: std::sync::OnceLock<Vec<GpuGaussian>> = std::sync::OnceLock::new();
 
+#[cfg(not(target_arch = "wasm32"))]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let ply_path = std::env::args()
         .nth(1)
@@ -26,6 +27,43 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     launch(GaussianSplatViewer { gaussian_count })?;
 
     Ok(())
+}
+
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    console_error_panic_hook::set_once();
+
+    wasm_bindgen_futures::spawn_local(async {
+        let bytes = fetch_ply_bytes("assets/truck_point_cloud.ply").await;
+
+        let raw_gaussians = ply::load_ply_from_bytes(&bytes);
+        let gpu_gaussians: Vec<GpuGaussian> = raw_gaussians.iter().map(GpuGaussian::from).collect();
+
+        let gaussian_count = gpu_gaussians.len();
+
+        if GAUSSIANS.set(gpu_gaussians).is_err() {
+            panic!("Failed to set gaussians");
+        }
+
+        launch(GaussianSplatViewer { gaussian_count }).expect("Failed to launch");
+    });
+}
+
+#[cfg(target_arch = "wasm32")]
+async fn fetch_ply_bytes(url: &str) -> Vec<u8> {
+    use wasm_bindgen::JsCast;
+    use wasm_bindgen_futures::JsFuture;
+
+    let window = web_sys::window().expect("No window");
+    let response = JsFuture::from(window.fetch_with_str(url))
+        .await
+        .expect("Fetch failed");
+    let response: web_sys::Response = response.dyn_into().expect("Response cast failed");
+    let array_buffer = JsFuture::from(response.array_buffer().expect("Array buffer failed"))
+        .await
+        .expect("Array buffer await failed");
+    let uint8_array = js_sys::Uint8Array::new(&array_buffer);
+    uint8_array.to_vec()
 }
 
 struct GaussianSplatViewer {

@@ -31,7 +31,7 @@ fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
     let key_left = keys[left];
     let key_right = keys[right];
 
-    let should_swap = select(key_left < key_right, key_left > key_right, ascending);
+    let should_swap = select((key_left < key_right), (key_left > key_right), ascending);
 
     if should_swap {
         keys[left] = key_right;
