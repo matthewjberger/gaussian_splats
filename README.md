@@ -2,6 +2,8 @@
 
 A real-time 3D Gaussian Splatting viewer built on the [Nightshade](https://github.com/matthewjberger/nightshade) game engine. Loads pre-trained `.ply` files from the standard [3DGS training pipeline](https://github.com/graphdeco-inria/gaussian-splatting) and renders them using GPU compute preprocessing, bitonic sort, and alpha-blended instanced quad rendering.
 
+![ezgif-10143c020bdfff9a](https://github.com/user-attachments/assets/9d4b76b2-e91f-4259-be9a-18669af60452)
+
 ## Usage
 
 ```bash
