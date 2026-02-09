@@ -156,12 +156,42 @@ impl SplatPass {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Preprocess Bind Group Layout"),
                 entries: &[
-                    buffer_layout_entry(0, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Uniform, false),
-                    buffer_layout_entry(1, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Storage { read_only: true }, false),
-                    buffer_layout_entry(2, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Storage { read_only: false }, false),
-                    buffer_layout_entry(3, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Storage { read_only: false }, false),
-                    buffer_layout_entry(4, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Storage { read_only: false }, false),
-                    buffer_layout_entry(5, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Storage { read_only: false }, false),
+                    buffer_layout_entry(
+                        0,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Uniform,
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        1,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Storage { read_only: true },
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        2,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Storage { read_only: false },
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        3,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Storage { read_only: false },
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        4,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Storage { read_only: false },
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        5,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Storage { read_only: false },
+                        false,
+                    ),
                 ],
             });
 
@@ -169,9 +199,24 @@ impl SplatPass {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Sort Bind Group Layout"),
                 entries: &[
-                    buffer_layout_entry(0, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Uniform, true),
-                    buffer_layout_entry(1, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Storage { read_only: false }, false),
-                    buffer_layout_entry(2, wgpu::ShaderStages::COMPUTE, wgpu::BufferBindingType::Storage { read_only: false }, false),
+                    buffer_layout_entry(
+                        0,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Uniform,
+                        true,
+                    ),
+                    buffer_layout_entry(
+                        1,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Storage { read_only: false },
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        2,
+                        wgpu::ShaderStages::COMPUTE,
+                        wgpu::BufferBindingType::Storage { read_only: false },
+                        false,
+                    ),
                 ],
             });
 
@@ -179,9 +224,24 @@ impl SplatPass {
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 label: Some("Render Bind Group Layout"),
                 entries: &[
-                    buffer_layout_entry(0, wgpu::ShaderStages::VERTEX, wgpu::BufferBindingType::Uniform, false),
-                    buffer_layout_entry(1, wgpu::ShaderStages::VERTEX, wgpu::BufferBindingType::Storage { read_only: true }, false),
-                    buffer_layout_entry(2, wgpu::ShaderStages::VERTEX, wgpu::BufferBindingType::Storage { read_only: true }, false),
+                    buffer_layout_entry(
+                        0,
+                        wgpu::ShaderStages::VERTEX,
+                        wgpu::BufferBindingType::Uniform,
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        1,
+                        wgpu::ShaderStages::VERTEX,
+                        wgpu::BufferBindingType::Storage { read_only: true },
+                        false,
+                    ),
+                    buffer_layout_entry(
+                        2,
+                        wgpu::ShaderStages::VERTEX,
+                        wgpu::BufferBindingType::Storage { read_only: true },
+                        false,
+                    ),
                 ],
             });
 
@@ -189,12 +249,30 @@ impl SplatPass {
             label: Some("Preprocess Bind Group"),
             layout: &preprocess_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: uniform_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 1, resource: gaussian_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 2, resource: splat_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 3, resource: sort_keys_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 4, resource: sort_values_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 5, resource: draw_indirect_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: uniform_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: gaussian_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: splat_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 3,
+                    resource: sort_keys_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 4,
+                    resource: sort_values_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 5,
+                    resource: draw_indirect_buffer.as_entire_binding(),
+                },
             ],
         });
 
@@ -207,11 +285,20 @@ impl SplatPass {
                     resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
                         buffer: &sort_uniform_buffer,
                         offset: 0,
-                        size: Some(std::num::NonZero::new(std::mem::size_of::<SortUniforms>() as u64).unwrap()),
+                        size: Some(
+                            std::num::NonZero::new(std::mem::size_of::<SortUniforms>() as u64)
+                                .unwrap(),
+                        ),
                     }),
                 },
-                wgpu::BindGroupEntry { binding: 1, resource: sort_keys_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 2, resource: sort_values_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: sort_keys_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: sort_values_buffer.as_entire_binding(),
+                },
             ],
         });
 
@@ -219,9 +306,18 @@ impl SplatPass {
             label: Some("Render Bind Group"),
             layout: &render_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry { binding: 0, resource: uniform_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 1, resource: splat_buffer.as_entire_binding() },
-                wgpu::BindGroupEntry { binding: 2, resource: sort_values_buffer.as_entire_binding() },
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: uniform_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 1,
+                    resource: splat_buffer.as_entire_binding(),
+                },
+                wgpu::BindGroupEntry {
+                    binding: 2,
+                    resource: sort_values_buffer.as_entire_binding(),
+                },
             ],
         });
 
@@ -267,12 +363,11 @@ impl SplatPass {
                 cache: None,
             });
 
-        let sort_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Sort Pipeline Layout"),
-                bind_group_layouts: &[&sort_bind_group_layout],
-                push_constant_ranges: &[],
-            });
+        let sort_pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: Some("Sort Pipeline Layout"),
+            bind_group_layouts: &[&sort_bind_group_layout],
+            push_constant_ranges: &[],
+        });
 
         let sort_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
             label: Some("Sort Pipeline"),
@@ -389,8 +484,11 @@ impl PassNode<World> for SplatPass {
         let view = camera_matrices.view;
         let projection = camera_matrices.projection;
 
-        let (viewport_width, viewport_height) =
-            world.resources.window.cached_viewport_size.unwrap_or((1920, 1080));
+        let (viewport_width, viewport_height) = world
+            .resources
+            .window
+            .cached_viewport_size
+            .unwrap_or((1920, 1080));
 
         let focal_x = projection[(0, 0)] * viewport_width as f32 * 0.5;
         let focal_y = projection[(1, 1)] * viewport_height as f32 * 0.5;

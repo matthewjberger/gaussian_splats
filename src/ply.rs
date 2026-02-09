@@ -6,8 +6,8 @@ pub fn load_ply(path: &std::path::Path) -> Vec<RawGaussian> {
     });
 
     let (header_end, line_ending_len) = find_header_end(&data);
-    let header_str = std::str::from_utf8(&data[..header_end])
-        .expect("PLY header is not valid UTF-8");
+    let header_str =
+        std::str::from_utf8(&data[..header_end]).expect("PLY header is not valid UTF-8");
 
     let vertex_count = parse_vertex_count(header_str);
 
@@ -23,8 +23,7 @@ pub fn load_ply(path: &std::path::Path) -> Vec<RawGaussian> {
         body.len()
     );
 
-    let raw_slice: &[RawGaussian] =
-        bytemuck::cast_slice(&body[..expected_size]);
+    let raw_slice: &[RawGaussian] = bytemuck::cast_slice(&body[..expected_size]);
 
     raw_slice.to_vec()
 }

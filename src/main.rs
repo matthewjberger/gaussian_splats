@@ -23,9 +23,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         panic!("Failed to set gaussians");
     }
 
-    launch(GaussianSplatViewer {
-        gaussian_count,
-    })?;
+    launch(GaussianSplatViewer { gaussian_count })?;
 
     Ok(())
 }
@@ -64,11 +62,7 @@ impl State for GaussianSplatViewer {
     ) {
         let gaussians = GAUSSIANS.get().expect("Gaussians not loaded");
 
-        let splat_pass = SplatPass::new(
-            device,
-            gaussians,
-            wgpu::TextureFormat::Rgba16Float,
-        );
+        let splat_pass = SplatPass::new(device, gaussians, wgpu::TextureFormat::Rgba16Float);
 
         graph
             .pass(Box::new(splat_pass))
